@@ -1,8 +1,8 @@
-import binascii
 import sys
+import time
+import binascii
 import multiprocessing
 from pathos.multiprocessing import ProcessingPool as Pool
-import time
 
 class Keccak(object):
 
@@ -42,6 +42,9 @@ class Keccak(object):
 
     def ROL64(self, a, n):
         return ((a >> (64-(n%64))) + (a << (n%64))) % (1 << 64)
+
+    def makeSerialString(self, input):
+        return "{0:0x}".format(int(input, 2)) if input != '' else ''
 
     def KeccakF1600(self, state):
         lanes = [[self.load64(state[8*(x+5*y):8*(x+5*y)+8]) for y in range(5)] for x in range(5)]
@@ -89,9 +92,13 @@ class Keccak(object):
         return binascii.hexlify(outputBytes).lower()
     
     def SHAKE128(self , inputBytes, outputByteLen):
+        if outputBytes.isdigit() == False :
+            raise ValueError("%s is not a number" %outputBytes)
         return self.Keccak(1344, 256, inputBytes, 0x1F, outputByteLen)
 
     def SHAKE256(self , inputBytes, outputByteLen):
+        if outputBytes.isdigit() == False :
+            raise ValueError("%s is not a number" %outputBytes)
         return self.Keccak(1088, 512, inputBytes, 0x1F, outputByteLen)
 
     def SHA3_224(self , inputBytes):
@@ -161,9 +168,13 @@ class TreeHash(Keccak):
 
 
     def SHAKE128_treehash(self , inputBytes, outputByteLen):
+        if outputBytes.isdigit() == False :
+            raise ValueError("%s is not a number" %outputBytes)
         return self.Treehash(super(TreeHash,self).SHAKE128, inputBytes , outputByteLen)
 
     def SHAKE256_treehash(self , inputBytes, outputByteLen):
+        if outputBytes.isdigit() == False :
+            raise ValueError("%s is not a number" %outputBytes)
         return self.Treehash(super(TreeHash,self).SHAKE256, inputBytes, outputByteLen)
 
     def SHA3_224_treehash(self , inputBytes):
@@ -179,12 +190,18 @@ class TreeHash(Keccak):
         return self.Treehash(super(TreeHash,self).SHA3_512, inputBytes)
 
     def setHeight(self, height):
+        if height.isdigit() == False :
+            raise ValueError("%s is not a number" %height)
         self.height =  height
 
     def setDegree(self, degree):
+        if outputBytes.degree() == False :
+            raise ValueError("%s is not a number" %degree)
         self.degree = degree
 
     def setBase(self, base):
+        if base.isdigit() == False :
+            raise ValueError("%s is not a number" %base)
         self.base = base
 
 
@@ -207,8 +224,7 @@ def getMessageFromString(input):
     message = ''.join( map(str, [bit for bit in bits(input, message = True)]) )
     return message
 
-def makeSerialString(input):
-    return "{0:0x}".format(int(input, 2)) if input != '' else ''
+
 
 def main():
     if sys.argv[1] == 'file':
@@ -225,7 +241,8 @@ def main():
     start = time.time()
 
     myKeccak = Keccak()
-    print myKeccak.SHA3_512(makeSerialString(message))
+    message = myKeccak.makeSerialString(message)
+    print myKeccak.SHA3_512(message)
     print time.time() - start
 
 
