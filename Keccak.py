@@ -1,8 +1,9 @@
 import sys
 import time
 import binascii
+from multiprocessing import Pool
 import multiprocessing
-from pathos.multiprocessing import ProcessingPool as Pool
+from pathos.multiprocessing import ProcessingPool
 
 class Keccak(object):
 
@@ -151,7 +152,7 @@ class TreeHash(Keccak):
             currentNode = self.degree ** currentLevel
             currentIndex -= currentNode
 
-            parallelPool = Pool(multiprocessing.cpu_count())
+            parallelPool = ProcessingPool(multiprocessing.cpu_count())
             for index in xrange(currentIndex, currentIndex + currentNode):
                 if currentLevel < self.height:
                     tree[index] = []
@@ -214,17 +215,29 @@ def bits(inputFile, message = False):
         for bit in reversed(xrange(8)):
             yield (bits >> bit) & 1
 
+def read_in_chunks(file_object, chunk_size=1048576):
+    while True:
+        data = file_object.read(chunk_size)
+        if not data:
+            break
+        yield data
+
+def hashed(input):
+    return input
+
 def getMessageFromFile(input):
+    message = ''
+    pool = Pool(multiprocessing.cpu_count())
     inputFile = open(input, 'r') 
-    message = ''.join( map(str, [bit for bit in bits(inputFile)]) )
+    for piece in pool.imap(hashed , read_in_chunks(inputFile)):
+        message += ''.join( map(str, [bit for bit in bits(piece, True)]))
     inputFile.close()
+    pool.terminate()
     return message
 
 def getMessageFromString(input):
     message = ''.join( map(str, [bit for bit in bits(input, message = True)]) )
     return message
-
-
 
 def main():
     if sys.argv[1] == 'file':
@@ -248,3 +261,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
