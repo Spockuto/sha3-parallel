@@ -1,4 +1,5 @@
-#SHA3-Parallel
+SHA3-Parallel
+=============
 
 Things done
 ===========
